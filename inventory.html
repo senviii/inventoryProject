@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Sales Comparison</title>
+    <style>
+        /* General Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background-color: #f4f4f4;
+            color: #333;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        h1 {
+            text-align: center;
+            color: #FF69B4;
+        }
+        .form-container {
+            margin-bottom: 20px;
+        }
+        label, select, input, button {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        select, input, button {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #FF69B4;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #FF1493;
+        }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .button-container button {
+            width: 48%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #FF69B4;
+            color: white;
+        }
+        td.demand {
+            background-color: #e0ffe0; /* Highlight for high demand */
+        }
+        td.loss {
+            background-color: #ffe0e0; /* Highlight for loss */
+        }
+        canvas {
+            margin-top: 20px;
+            max-width: 100%;
+        }
+
+        /* Login form styling */
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .login-container input {
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .login-container button {
+            padding: 10px;
+            background-color: #FF69B4;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .login-container button:hover {
+            background-color: #FF1493;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Login Form -->
+<div class="login-container" id="login-container">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <button id="login-button">Login</button>
+    <p class="error-message" id="error-message"></p>
+</div>
+
+<!-- Sales Comparison Container -->
+<div class="container" id="sales-container" style="display: none;">
+    <h1>Advanced Product Details and Sales Comparison</h1>
+
+    <!-- Product Details Form -->
+    <div class="form-container">
+        <label for="productName">Product Name:</label>
+        <input type="text" id="productName" required>
+
+        <label for="productCategory">Product Category:</label>
+        <input type="text" id="productCategory" required>
+
+        <label for="productQuantity">Quantity Available:</label>
+        <input type="number" id="productQuantity" required>
+
+        <label for="company1Sales">Company 1 Sales:</label>
+        <input type="number" id="company1Sales" required>
+
+        <label for="company2Sales">Company 2 Sales:</label>
+        <input type="number" id="company2Sales" required>
+
+        <button id="add-product">Add Product</button>
+    </div>
+
+    <!-- Product Details Table -->
+    <h2>Product Details</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>Product Name</th>
+            <th>Category</th>
+            <th>Quantity</th>
+            <th>Company 1 Sales</th>
+            <th>Company 2 Sales</th>
+            <th>Status</th>
+        </tr>
+        </thead>
+        <tbody id="productTableBody">
+        <!-- Dynamic content will be inserted here -->
+        </tbody>
+    </table>
+
+    <!-- Graph -->
+    <canvas id="salesChart"></canvas>
+
+    <!-- Buttons (Logout & Sales) -->
+    <div class="button-container">
+        <button id="logout">Logout</button>
+        <button id="view-sales">Sales of the Products</button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Hardcoded login credentials
+    const validUsername = 'admin';
+    const validPassword = 'password';
+
+    // Show/hide pages based on login state
+    function checkLoginStatus() {
+        const loggedIn = localStorage.getItem('loggedIn');
+        if (loggedIn === 'true') {
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('sales-container').style.display = 'block';
+        } else {
+            document.getElementById('login-container').style.display = 'flex';
+            document.getElementById('sales-container').style.display = 'none';
+        }
+    }
+
+    // Run the check on page load
+    window.onload = checkLoginStatus;
+
+    // Login functionality
+    document.getElementById('login-button').addEventListener('click', function () {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        if (username === validUsername && password === validPassword) {
+            // Successful login
+            localStorage.setItem('loggedIn', 'true');
+            checkLoginStatus(); // Switch to the sales page
+        } else {
+            document.getElementById('error-message').textContent = 'Invalid username or password!';
+        }
+    });
+
+    // Logout functionality
+    document.getElementById('logout').addEventListener('click', function () {
+        localStorage.removeItem('loggedIn'); // Clear login status
+        checkLoginStatus(); // Switch back to login page
+    });
+
+    // Initialize sales data for chart
+    const salesData = {
+        labels: [],
+        datasets: [
+            {
+                label: 'Company 1 Sales',
+                data: [],
+                backgroundColor: '#FF69B4',
+                borderColor: '#FF1493',
+                borderWidth: 1
+            },
+            {
+                label: 'Company 2 Sales',
+                data: [],
+                backgroundColor: '#ADD8E6',
+                borderColor: '#00BFFF',
+                borderWidth: 1
+            }
+        ]
+    };
+
+    // Chart configuration
+    const config = {
+        type: 'bar',
+        data: salesData,
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    };
+
+    // Initialize chart
+    const salesChart = new Chart(
+        document.getElementById('salesChart'),
+        config
+    );
+
+    // Function to determine product status
+    function determineStatus(company1Sales, company2Sales, quantity) {
+        const totalSales = company1Sales + company2Sales;
+        if (totalSales > quantity) {
+            return 'In High Demand';
+        } else if (totalSales < quantity / 2) {
+            return 'At a Loss';
+        } else {
+            return 'Stable';
+        }
+    }
+
+    // Add product to table and update chart
+    document.getElementById('add-product').addEventListener('click', function () {
+        const productName = document.getElementById('productName').value;
+        const productCategory = document.getElementById('productCategory').value;
+        const productQuantity = document.getElementById('productQuantity').value;
+        const company1Sales = document.getElementById('company1Sales').value;
+        const company2Sales = document.getElementById('company2Sales').value;
+
+        // Ensure all fields are filled
+        if (productName && productCategory && productQuantity && company1Sales && company2Sales) {
+            // Determine the product status
+            const status = determineStatus(Number(company1Sales), Number(company2Sales), Number(productQuantity));
+
+            // Add product to table
+            const row = `<tr>
+                            <td>${productName}</td>
+                            <td>${productCategory}</td>
+                            <td>${productQuantity}</td>
+                            <td>${company1Sales}</td>
+                            <td>${company2Sales}</td>
+                            <td class="${status === 'In High Demand' ? 'demand' : status === 'At a Loss' ? 'loss' : ''}">${status}</td>
+                        </tr>`;
+            document.getElementById('productTableBody').innerHTML += row;
+
+            // Add product to chart
+            salesData.labels.push(productName);
+            salesData.datasets[0].data.push(company1Sales);
+            salesData.datasets[1].data.push(company2Sales);
+
+            // Update chart
+            salesChart.update();
+
+            // Clear input fields
+            document.getElementById('productName').value = '';
+            document.getElementById('productCategory').value = '';
+            document.getElementById('productQuantity').value = '';
+            document.getElementById('company1Sales').value = '';
+            document.getElementById('company2Sales').value = '';
+        } else {
+            alert('Please fill all fields!');
+        }
+    });
+
+    // Placeholder for sales button (can add navigation logic here)
+    document.getElementById('view-sales').addEventListener('click', function () {
+        alert('Sales of products will be shown here.');
+    });
+</script>
+
+</body>
+</html>
